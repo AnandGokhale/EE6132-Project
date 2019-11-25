@@ -4,13 +4,13 @@ import json
 import numpy as np
 import os
 import random
-from scipy.misc import imsave
+import cv2
 
 import click
 import tensorflow as tf
 
-from . import cyclegan_datasets
-from . import data_loader, losses, model
+import cyclegan_datasets
+import data_loader, losses, model
 
 slim = tf.contrib.slim
 
@@ -25,7 +25,7 @@ class CycleGAN:
         current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
 
         self._pool_size = pool_size
-        self._size_before_crop = 286
+        self._size_before_crop = [model.IMG_HEIGHT,model.IMG_WIDTH+2]
         self._lambda_a = lambda_a
         self._lambda_b = lambda_b
         self._output_dir = os.path.join(output_root_dir, current_time)
@@ -64,30 +64,30 @@ class CycleGAN:
         self.input_a = tf.placeholder(
             tf.float32, [
                 1,
-                model.IMG_WIDTH,
                 model.IMG_HEIGHT,
+                model.IMG_WIDTH,
                 model.IMG_CHANNELS
             ], name="input_A")
         self.input_b = tf.placeholder(
             tf.float32, [
                 1,
-                model.IMG_WIDTH,
                 model.IMG_HEIGHT,
+                model.IMG_WIDTH,
                 model.IMG_CHANNELS
             ], name="input_B")
 
         self.fake_pool_A = tf.placeholder(
             tf.float32, [
                 None,
-                model.IMG_WIDTH,
                 model.IMG_HEIGHT,
+                model.IMG_WIDTH,
                 model.IMG_CHANNELS
             ], name="fake_pool_A")
         self.fake_pool_B = tf.placeholder(
             tf.float32, [
                 None,
-                model.IMG_WIDTH,
                 model.IMG_HEIGHT,
+                model.IMG_WIDTH,
                 model.IMG_CHANNELS
             ], name="fake_pool_B")
 
@@ -104,8 +104,9 @@ class CycleGAN:
             'fake_pool_b': self.fake_pool_B,
         }
 
-        outputs = model.get_outputs(
+        outputs= model.get_outputs(
             inputs, network=self._network_version, skip=self._skip)
+
 
         self.prob_real_a_is_real = outputs['prob_real_a_is_real']
         self.prob_real_b_is_real = outputs['prob_real_b_is_real']
@@ -130,6 +131,12 @@ class CycleGAN:
         *_trainer -> Various trainer for above loss functions
         *_summ -> Summary variables for above loss functions
         """
+        print("INPUT A : ", self.input_a.shape)
+        print("Cycle A : ", self.cycle_images_a.shape)
+
+        print("INPUT B : ", self.input_b.shape)
+        print("Cycle B : ", self.cycle_images_b.shape)
+        
         cycle_consistency_loss_a = \
             self._lambda_a * losses.cycle_consistency_loss(
                 real_images=self.input_a, generated_images=self.cycle_images_a,
@@ -156,7 +163,7 @@ class CycleGAN:
             prob_fake_is_real=self.prob_fake_pool_b_is_real,
         )
 
-        optimizer = tf.train.AdamOptimizer(self.learning_rate, beta1=0.5)
+        optimizer = tf.train.AdamOptimizer(self.learning_rate, beta1=0.9)
 
         self.model_vars = tf.trainable_variables()
 
@@ -198,6 +205,7 @@ class CycleGAN:
             for i in range(0, self._num_imgs_to_save):
                 print("Saving image {}/{}".format(i, self._num_imgs_to_save))
                 inputs = sess.run(self.inputs)
+                print(inputs['images_i'].shape,inputs['images_j'].shape)
                 fake_A_temp, fake_B_temp, cyc_A_temp, cyc_B_temp = sess.run([
                     self.fake_images_a,
                     self.fake_images_b,
@@ -213,8 +221,8 @@ class CycleGAN:
 
                 for name, tensor in zip(names, tensors):
                     image_name = name + str(epoch) + "_" + str(i) + ".jpg"
-                    imsave(os.path.join(self._images_dir, image_name),
-                           ((tensor[0] + 1) * 127.5).astype(np.uint8)
+                    cv2.imwrite(os.path.join(self._images_dir, image_name),
+                           ((tensor[0] + 1) * 127.5).astype(np.uint8)[:,:,::-1]
                            )
                     v_html.write(
                         "<img src=\"" +
@@ -262,8 +270,9 @@ class CycleGAN:
         saver = tf.train.Saver()
 
         max_images = cyclegan_datasets.DATASET_TO_SIZES[self._dataset_name]
-
-        with tf.Session() as sess:
+        sess_config = tf.ConfigProto(allow_soft_placement=True)
+        sess_config.gpu_options.allow_growth = True
+        with tf.Session(config=sess_config) as sess:
             sess.run(init)
 
             # Restore the model to run the model from last checkpoint
@@ -383,8 +392,9 @@ class CycleGAN:
         self.model_setup()
         saver = tf.train.Saver()
         init = tf.global_variables_initializer()
-
-        with tf.Session() as sess:
+        sess_config = tf.ConfigProto(allow_soft_placement=True)
+        sess_config.gpu_options.allow_growth = True
+        with tf.Session(config=sess_config) as sess:
             sess.run(init)
 
             chkpt_fname = tf.train.latest_checkpoint(self._checkpoint_dir)

@@ -2,16 +2,16 @@
 
 import tensorflow as tf
 
-from . import layers
+import layers
 
 # The number of samples per batch.
 BATCH_SIZE = 1
 
 # The height of each image.
-IMG_HEIGHT = 256
+IMG_HEIGHT = 384
 
 # The width of each image.
-IMG_WIDTH = 256
+IMG_WIDTH = 784
 
 # The number of color channels per image.
 IMG_CHANNELS = 3
@@ -147,13 +147,15 @@ def build_generator_resnet_9blocks(inputgen, name="generator", skip=False):
 
         pad_input = tf.pad(inputgen, [[0, 0], [ks, ks], [
             ks, ks], [0, 0]], padding)
+        
+
+        
         o_c1 = layers.general_conv2d(
             pad_input, ngf, f, f, 1, 1, 0.02, name="c1")
         o_c2 = layers.general_conv2d(
             o_c1, ngf * 2, ks, ks, 2, 2, 0.02, "SAME", "c2")
         o_c3 = layers.general_conv2d(
             o_c2, ngf * 4, ks, ks, 2, 2, 0.02, "SAME", "c3")
-
         o_r1 = build_resnet_block(o_c3, ngf * 4, "r1", padding)
         o_r2 = build_resnet_block(o_r1, ngf * 4, "r2", padding)
         o_r3 = build_resnet_block(o_r2, ngf * 4, "r3", padding)
@@ -178,7 +180,7 @@ def build_generator_resnet_9blocks(inputgen, name="generator", skip=False):
             out_gen = tf.nn.tanh(inputgen + o_c6, "t1")
         else:
             out_gen = tf.nn.tanh(o_c6, "t1")
-
+        
         return out_gen
 
 

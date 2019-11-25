@@ -5,7 +5,7 @@ import random
 
 import click
 
-from . import cyclegan_datasets
+import cyclegan_datasets
 
 
 def create_list(foldername, fulldir=True, suffix=".jpg"):
@@ -34,15 +34,15 @@ def create_list(foldername, fulldir=True, suffix=".jpg"):
 @click.command()
 @click.option('--image_path_a',
               type=click.STRING,
-              default='./input/horse2zebra/trainA',
+              default='/mnt/dataset_HDD/kitti_resized',
               help='The path to the images from domain_a.')
 @click.option('--image_path_b',
               type=click.STRING,
-              default='./input/horse2zebra/trainB',
+              default='/mnt/dataset_HDD/IDD_Segmentation/new2/images/',
               help='The path to the images from domain_b.')
 @click.option('--dataset_name',
               type=click.STRING,
-              default='horse2zebra_train',
+              default='kitti2idd_train',
               help='The name of the dataset in cyclegan_dataset.')
 @click.option('--do_shuffle',
               type=click.BOOL,
@@ -57,7 +57,7 @@ def create_dataset(image_path_a, image_path_b,
 
     output_path = cyclegan_datasets.PATH_TO_CSV[dataset_name]
 
-    num_rows = cyclegan_datasets.DATASET_TO_SIZES[dataset_name]
+    num_rows = 27542
     all_data_tuples = []
     for i in range(num_rows):
         all_data_tuples.append((

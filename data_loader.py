@@ -1,7 +1,7 @@
 import tensorflow as tf
 
-from . import cyclegan_datasets
-from . import model
+import cyclegan_datasets
+import model
 
 
 def _load_samples(csv_name, image_type):
@@ -30,6 +30,7 @@ def _load_samples(csv_name, image_type):
         image_decoded_B = tf.image.decode_png(
             file_contents_j, channels=model.IMG_CHANNELS, dtype=tf.uint8)
 
+    
     return image_decoded_A, image_decoded_B
 
 
@@ -52,11 +53,12 @@ def load_data(dataset_name, image_size_before_crop,
     image_i, image_j = _load_samples(
         csv_name, cyclegan_datasets.DATASET_TO_IMAGETYPE[dataset_name])
 
+    
     # Preprocessing:
     image_i = tf.image.resize_images(
-        image_i, [image_size_before_crop, image_size_before_crop])
+        image_i, [image_size_before_crop[0], image_size_before_crop[1]])
     image_j = tf.image.resize_images(
-        image_j, [image_size_before_crop, image_size_before_crop])
+        image_j, [image_size_before_crop[0], image_size_before_crop[1]])
 
     if do_flipping is True:
         image_i = tf.image.random_flip_left_right(image_i)
@@ -73,7 +75,7 @@ def load_data(dataset_name, image_size_before_crop,
     # Batch
     if do_shuffle is True:
         images_i, images_j = tf.train.shuffle_batch(
-            [image_i, image_j], 1, 5000, 100)
+            [image_i, image_j], 1, 500, 100)
     else:
         images_i, images_j = tf.train.batch(
             [image_i, image_j], 1)
