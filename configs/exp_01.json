@@ -3,9 +3,9 @@
   "pool_size": 50,
   "base_lr":0.0002,
   "max_step": 200,
-  "network_version": "pytorch",
+  "network_version": "tensorflow",
   "dataset_name": "kitti2idd_train",
   "do_flipping": 1,
-  "_LAMBDA_A": 10,
+  "_LAMBDA_A": 1,
   "_LAMBDA_B": 10
 }
