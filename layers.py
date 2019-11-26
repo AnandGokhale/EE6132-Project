@@ -59,11 +59,12 @@ def resize_conv2d(inputconv,outshape,o_d=64,f_h=7,f_w=7,scale=2,
                      do_norm=True, do_relu=True, relufactor=0):
 
     with tf.variable_scope(name):
-        shape = inputconv.shape    
-        resize = tf.image.resize_bilinear(inputconv,size=(shape[1]*scale,shape[2]*scale)) 
+        shape = inputconv.shape
+        new_shape = (tf.multiply(tf.cast(shape[1],tf.int32),scale),tf.multiply(tf.cast(shape[2],tf.int32),scale))    
+        resize = tf.image.resize_bilinear(inputconv,size=new_shape) 
         conv = tf.contrib.layers.conv2d(
              resize, o_d, [f_w,f_h],
-             [s_h,s_w],padding,activation_fn=None,
+             [1,1],padding,activation_fn=None,
              weights_initializer=tf.truncated_normal_initializer(stddev=stddev),
              biases_initializer=tf.constant_initializer(0.0)
           )
